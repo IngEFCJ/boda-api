@@ -12,7 +12,7 @@ namespace ApiConfirmacionAsistenciaInvitacion.Controllers
 
         public AuthController(IAuthService authService)
         {
-            _authService = authService;
+         _authService = authService;
         }
 
         /// <summary>
