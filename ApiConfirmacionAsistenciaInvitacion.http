@@ -1,6 +1,0 @@
-@ApiConfirmacionAsistenciaInvitacion_HostAddress = http://localhost:5200
-
-GET {{ApiConfirmacionAsistenciaInvitacion_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
