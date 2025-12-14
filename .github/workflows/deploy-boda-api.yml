@@ -1,0 +1,51 @@
+name: Build and deploy ASP.Net Core app to Azure Web App - boda-api
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Build
+        run: dotnet build Invitaciones.Api/Invitaciones.Api.csproj -c Release
+
+      - name: Publish
+        run: dotnet publish Invitaciones.Api/Invitaciones.Api.csproj -c Release -o publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: .net-app
+          path: publish
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: .net-app
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: boda-api
+          slot-name: Production
+          package: .
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_FA00B79A2A214B68B3DE8D55538D90B5 }}
