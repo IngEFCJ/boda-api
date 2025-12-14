@@ -21,6 +21,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
+app.MapGet("/", () => "ESTA ES LA NUEVA API - " + typeof(Program).Assembly.GetName().Name);
+
 app.MapControllers();
 
 app.Run();
