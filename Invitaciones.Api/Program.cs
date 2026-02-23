@@ -1,23 +1,56 @@
+using Invitaciones.Api.business_Logic;
+using Invitaciones.Api.Data;
+using Invitaciones.Api.Interfaces;
+using Microsoft.Data.SqlClient;
+using System.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// Controllers
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// ======================
+// DI (Invitaciones)
+// ======================
+builder.Services.AddScoped<IDbConnectionFactory, SqlConnectionFactory>();
+builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
+builder.Services.AddScoped<IPublicInvitationService, PublicInvitationService>();
+
+// ======================
+// (Opcional) CORS si Angular está en otro dominio
+// ======================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontCors", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:4200"   // Angular local
+                                          // "https://tu-dominio.com" // Prod
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Swagger
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Boda API v1");
-    c.RoutePrefix = "swagger";   // URL: /swagger
+    c.RoutePrefix = "swagger";
 });
 
 app.UseHttpsRedirection();
+
+// (Opcional) CORS: va antes de Authorization y MapControllers
+app.UseCors("FrontCors");
 
 app.UseAuthorization();
 
@@ -26,3 +59,25 @@ app.MapGet("/", () => "ESTA ES LA NUEVA API - " + typeof(Program).Assembly.GetNa
 app.MapControllers();
 
 app.Run();
+
+
+// ======================
+// Connection Factory
+// ======================
+public interface IDbConnectionFactory
+{
+    IDbConnection Create();
+}
+
+public sealed class SqlConnectionFactory : IDbConnectionFactory
+{
+    private readonly string _cs;
+
+    public SqlConnectionFactory(IConfiguration config)
+    {
+        _cs = config.GetConnectionString("Default")
+              ?? throw new InvalidOperationException("Missing connection string: Default");
+    }
+
+    public IDbConnection Create() => new SqlConnection(_cs);
+}
