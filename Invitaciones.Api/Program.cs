@@ -29,8 +29,8 @@ builder.Services.AddCors(options =>
     {
         policy
             .WithOrigins(
-                "http://localhost:4200"   // Angular local
-                                          // "https://tu-dominio.com" // Prod
+                "https://boda-api-e7dyh6hndjg8c4d8.westeurope-01.azurewebsites.net/"   // Angular local
+                                                                                              // "https://tu-dominio.com" // Prod
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
