@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+const string CorsPolicyName = "FrontCors";
 
 // Controllers
 builder.Services.AddControllers();
@@ -21,17 +22,29 @@ builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
 builder.Services.AddScoped<IPublicInvitationService, PublicInvitationService>();
 
 // ======================
-// (Opcional) CORS si Angular está en otro dominio
+// CORS para el frontend publico
 // ======================
+var configuredOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ?? new[]
+    {
+        "https://icy-beach-09390d410.5.azurestaticapps.net",
+        "http://localhost:4200"
+    };
+
+var allowedOrigins = configuredOrigins
+    .Select(origin => origin.Trim().TrimEnd('/'))
+    .Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("FrontCors", policy =>
+    options.AddPolicy(CorsPolicyName, policy =>
     {
         policy
-            .WithOrigins(
-                "https://icy-beach-09390d410.5.azurestaticapps.net",
-                "http://localhost:4200"
-            )
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -47,10 +60,10 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-app.UseHttpsRedirection();
+// CORS debe ejecutarse antes de redirecciones, Authorization y MapControllers.
+app.UseCors(CorsPolicyName);
 
-// (Opcional) CORS: va antes de Authorization y MapControllers
-app.UseCors("FrontCors");
+app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
